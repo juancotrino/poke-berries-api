@@ -1,4 +1,6 @@
 import os
+from io import BytesIO
+import base64
 import asyncio
 from statistics import median, variance, mean
 from collections import Counter
@@ -6,11 +8,19 @@ from collections import Counter
 import requests
 import httpx
 
+import matplotlib.pyplot as plt
+
+from fastapi import Request
+from fastapi.templating import Jinja2Templates
+
 from app.libs.core.logger import get_logger
 from app.schemas.berries import BerriesStats
 
 
 Logger = get_logger(__name__)
+
+# Mount templates
+templates = Jinja2Templates(directory="templates")
 
 class BerriesService():
 
@@ -97,3 +107,35 @@ class BerriesService():
         berries_stats = BerriesStats.model_validate(results)
 
         return berries_stats
+
+    @classmethod
+    async def get_histogram(cls, request: Request):
+        """
+        Generates a HTML template with a histogram of `frequency_growth_time`
+        """
+
+        # Get stats
+        berries_stats = await cls.get_stats()
+
+        # Extract `frequency_growth_time` dictionary
+        data = berries_stats.frequency_growth_time
+
+        plt.hist(data.keys(), bins=len(data), weights=data.values(), edgecolor='black')
+        plt.xlabel('Values')
+        plt.ylabel('Frequency')
+        plt.title('Histogram')
+
+        # Save the plot to a BytesIO object
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        plt.close()
+
+        # Convert the image to base64
+        plot = base64.b64encode(buffer.getvalue()).decode('utf8')
+
+        return templates.TemplateResponse(
+            request=request,
+            name='histogram.html',
+            context={'plot': plot}
+        )
