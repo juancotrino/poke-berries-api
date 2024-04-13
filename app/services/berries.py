@@ -5,6 +5,8 @@ import asyncio
 from statistics import median, variance, mean
 from collections import Counter
 
+from dotenv import load_dotenv
+
 import requests
 import httpx
 
@@ -16,6 +18,8 @@ from fastapi.templating import Jinja2Templates
 from app.libs.core.logger import get_logger
 from app.schemas.berries import BerriesStats
 
+
+load_dotenv()
 
 Logger = get_logger(__name__)
 
