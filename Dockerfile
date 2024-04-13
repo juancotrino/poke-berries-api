@@ -20,8 +20,8 @@ RUN pip install \
     --target ${FUNCTION_DIR} \
         awslambdaric
 
-RUN pip install -r requirements.txt\
-    --target ${FUNCTION_DIR}
+RUN pip install -r ${FUNCTION_DIR}/requirements.txt \
+    --target ${FUNCTION_DIR} \
 
 # COPY orm.py ${FUNCTION_DIR}/sqlalchemy_utils/functions/orm.py
 
