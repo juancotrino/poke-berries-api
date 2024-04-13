@@ -1,18 +1,47 @@
-# Lighter image
-FROM python:3.11.1-alpine
+# Define custom function directory
+ARG FUNCTION_DIR="/prod"
 
-WORKDIR /prod
-COPY app app
-COPY static static
-COPY main.py main.py
-COPY docs.py docs.py
-COPY requirements.txt requirements.txt
+FROM python:3.11 AS build-image
 
-RUN pip install -r requirements.txt
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR
 
-ENV POKE_API_URL=$POKE_API_URL
-ENV REDIS_HOST=$REDIS_HOST
+# Copy function code
+RUN mkdir -p ${FUNCTION_DIR}
+COPY app ${FUNCTION_DIR}/app
+COPY utils ${FUNCTION_DIR}/utils
+COPY static/images ${FUNCTION_DIR}/static/images
+COPY main.py ${FUNCTION_DIR}
+COPY docs.py ${FUNCTION_DIR}
+COPY requirements.txt ${FUNCTION_DIR}
 
-EXPOSE 8000
+# Install the function's dependencies, including your own package
+RUN pip install \
+    --target ${FUNCTION_DIR} \
+        awslambdaric
 
-CMD ["python", "main.py"]
+RUN pip install -r \
+    --target ${FUNCTION_DIR} \
+        ${FUNCTION_DIR}/requirements.txt
+
+# COPY orm.py ${FUNCTION_DIR}/sqlalchemy_utils/functions/orm.py
+
+# Use a slim version of the base Python image to reduce the final image size
+FROM python:3.11-slim
+
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR
+
+# Set working directory to function root directory
+WORKDIR ${FUNCTION_DIR}
+
+# Copy in the built dependencies
+COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
+
+# Update libraries
+RUN apt-get update
+
+# Set runtime interface client as default command for the container runtime
+ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
+# Pass the name of the function handler as an argument to the runtime
+CMD [ "main.handler" ]

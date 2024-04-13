@@ -1,6 +1,8 @@
 import os
 from contextlib import asynccontextmanager
 
+from mangum import Mangum
+
 import uvicorn
 
 from fastapi import FastAPI
@@ -64,5 +66,8 @@ def overridden_redoc():
 # Add berries router
 app.include_router(berries.router)
 
+# Entrypoint for Lambda
+handler = Mangum(app)
+
 if __name__ == '__main__':
-    uvicorn.run('main:app', host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run('main:app', host="0.0.0.0", port=8000)

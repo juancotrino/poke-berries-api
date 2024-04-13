@@ -46,7 +46,7 @@ Create a Poke-berries statistics API.
 - Use a Python library (example: Matplotlib) to create a Histogram graph and display the image in a plain html.
 - Keep a cache of 2 minutes of the data. You can use a persistent layer for this.
 
-## Running the API
+## Running the API locally
 
 first install pyenv
 install virtualenv
@@ -58,3 +58,7 @@ create a .env file with
   REDIS_HOST="redis://localhost"
 
 python main.py
+
+## Running the API on the Cloud
+
+This API has been also deployed to a AWS Lambda function and it is accesible [here](). Please note that because it is using a Lambda, probably it will take a few seconds to start the first time it is called.
